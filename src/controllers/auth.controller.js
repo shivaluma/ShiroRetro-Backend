@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const got = require('got');
 const { v4: uuidv4 } = require('uuid');
 const { ResponseService, UserService } = require('../services');
-const db = require('../config/db');
 const getCollection = require('../utils/getCollection');
 
 exports.postSignUp = async (req, res) => {
@@ -73,7 +72,7 @@ exports.postSignIn = async (req, res) => {
     }
 
     const payload = {
-      id: user.id,
+      id: user._id,
       username: user.username,
       displayName: user.displayName,
     };
@@ -111,7 +110,7 @@ exports.postGoogleSignIn = async (req, res) => {
     if (user) {
       if (user.socials && user.socials.googleId === response.sub) {
         const payload = {
-          id: user.id,
+          id: user._id,
           username: user.username,
           displayName: user.displayName,
         };

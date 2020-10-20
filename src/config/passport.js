@@ -14,7 +14,7 @@ module.exports = (passport) => {
       db.getDb()
         .db()
         .collection('users')
-        .findOne({ id: jwt_payload.id })
+        .findOne({ id: jwt_payload.id }, { fields: { password: 0 } })
         .then((user) => {
           if (user) {
             return done(null, user);

@@ -26,7 +26,7 @@ exports.changePassword = async (req, res) => {
 
   UserService.updateField({
     query: {
-      id: user.id,
+      id: user._id,
     },
     update: { password: newPasswordHashed },
   });
