@@ -3,8 +3,9 @@ const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const got = require('got');
 const { v4: uuidv4 } = require('uuid');
-const { ResponseService } = require('../services');
+const { ResponseService, UserService } = require('../services');
 const db = require('../config/db');
+const getCollection = require('../utils/getCollection');
 
 exports.postSignUp = async (req, res) => {
   const { username, password, confirmPassword, email } = req.body;
@@ -23,7 +24,7 @@ exports.postSignUp = async (req, res) => {
       email,
     };
     try {
-      await db.getDb().db().collection('users').insertOne(data);
+      await UserService.createUser(data);
       return res
         .status(201)
         .json(
@@ -50,11 +51,7 @@ exports.postSignIn = async (req, res) => {
   }
 
   try {
-    const user = await db
-      .getDb()
-      .db()
-      .collection('users')
-      .findOne({ username });
+    const user = await UserService.findOne({ username });
     req.log.info(user);
     if (!user)
       return res
@@ -107,13 +104,9 @@ exports.postGoogleSignIn = async (req, res) => {
     const query = `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${ggAccessToken}`;
     const response = await got(`${query}`).json();
 
-    const user = await db
-      .getDb()
-      .db()
-      .collection('users')
-      .findOne({
-        $or: [{ 'socials.googleId': response.sub }, { email: response.email }],
-      });
+    const user = await UserService.findOne({
+      $or: [{ 'socials.googleId': response.sub }, { email: response.email }],
+    });
 
     if (user) {
       if (user.socials && user.socials.googleId === response.sub) {
@@ -141,7 +134,7 @@ exports.postGoogleSignIn = async (req, res) => {
         );
     }
 
-    const socialPending = await db.getDb().db().collection('socials').findOne({
+    const socialPending = await getCollection('socials').findOne({
       provider: 'google',
       providerId: response.sub,
     });
@@ -155,7 +148,7 @@ exports.postGoogleSignIn = async (req, res) => {
     }
 
     const createAccountToken = uuidv4();
-    await db.getDb().db().collection('socials').insertOne({
+    await getCollection('socials').insertOne({
       createdAt: new Date(),
       provider: 'google',
       providerId: response.sub,
@@ -181,11 +174,7 @@ exports.getValidField = async (req, res) => {
       .status(400)
       .json(ResponseService.response(400, `field or value is missing.`));
   }
-  const user = await db
-    .getDb()
-    .db()
-    .collection('users')
-    .findOne({ [field]: value });
+  const user = await UserService.findOne({ [field]: value });
   if (!user) {
     return res.status(200).json(
       ResponseService.response(200, `${field} *${value}* is available.`, {
@@ -214,13 +203,9 @@ exports.postFacebookSignin = async (req, res) => {
     const query = `https://graph.facebook.com/${id}?fields=birthday,email,picture&access_token=${fbAccessToken}`;
     const response = await got(`${query}`).json();
 
-    const user = await db
-      .getDb()
-      .db()
-      .collection('users')
-      .findOne({
-        $or: [{ 'socials.facebookId': response.id }, { email: response.email }],
-      });
+    const user = await UserService.findOne({
+      $or: [{ 'socials.facebookId': response.id }, { email: response.email }],
+    });
 
     if (user) {
       const payload = ResponseService.userPayload(
@@ -237,7 +222,7 @@ exports.postFacebookSignin = async (req, res) => {
       );
     }
 
-    const socialPending = await db.getDb().db().collection('socials').findOne({
+    const socialPending = await getCollection('socials').findOne({
       provider: 'facebook',
       providerId: response.sub,
     });
@@ -251,7 +236,7 @@ exports.postFacebookSignin = async (req, res) => {
     }
 
     const createAccountToken = uuidv4();
-    await db.getDb().db().collection('socials').insertOne({
+    await getCollection('socials').insertOne({
       createdAt: new Date(),
       provider: 'facebook',
       providerId: response.id,

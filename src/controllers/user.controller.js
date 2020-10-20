@@ -1,6 +1,5 @@
 const argon2 = require('argon2');
-const db = require('../config/db');
-const { ResponseService } = require('../services');
+const { ResponseService, UserService } = require('../services');
 
 exports.getMe = async (req, res) => {
   return res.status(200).json(ResponseService.response(200, null, req.user));
@@ -25,15 +24,12 @@ exports.changePassword = async (req, res) => {
 
   const newPasswordHashed = await argon2.hash(newPassword);
 
-  db.getDb()
-    .db()
-    .collection('users')
-    .findAndModify({
-      query: {
-        id: user.id,
-      },
-      update: { password: newPasswordHashed },
-    });
+  UserService.updateField({
+    query: {
+      id: user.id,
+    },
+    update: { password: newPasswordHashed },
+  });
 
   return res
     .status(403)
