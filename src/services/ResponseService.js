@@ -16,4 +16,12 @@ module.exports = class ResponseService {
       data,
     };
   }
+
+  static userPayload(username, displayName, email) {
+    return {
+      username,
+      displayName,
+      email,
+    };
+  }
 };

@@ -21,6 +21,7 @@
     "got": "^11.7.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.6.2",
+    "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "pino": "^6.7.0",
     "uuid": "^8.3.1"
@@ -32,6 +33,7 @@
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-prettier": "^3.1.4",
     "nodemon": "^2.0.5",
+    "pino-pretty": "^4.3.0",
     "prettier": "^2.1.2"
   }
 }

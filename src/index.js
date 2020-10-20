@@ -5,9 +5,13 @@ const cors = require('cors');
 const pino = require('pino');
 const expressPino = require('express-pino-logger');
 const bodyParser = require('body-parser');
+const passport = require('passport');
 const db = require('./config/db');
 
-const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  prettyPrint: { colorize: true },
+});
 const expressLogger = expressPino({ logger });
 const router = require('./routes');
 
@@ -16,6 +20,9 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(compression());
 app.use(expressLogger);
+
+app.use(passport.initialize());
+require('./config/passport')(passport);
 
 app.use('/api/v1', router);
 

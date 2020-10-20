@@ -7,11 +7,11 @@ const { ResponseService } = require('../services');
 const db = require('../config/db');
 
 exports.postSignUp = async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
+  const { username, password, confirmPassword, email } = req.body;
+  if (!username || !password || !email || !confirmPassword) {
     return res
       .status(400)
-      .json(ResponseService.error(400, 'No username/password was provided.'));
+      .json(ResponseService.error(400, 'Please provide all necessary data.'));
   }
 
   try {
@@ -20,6 +20,7 @@ exports.postSignUp = async (req, res) => {
       username,
       password: hashedPassword,
       displayName: username,
+      email,
     };
     try {
       await db.getDb().db().collection('users').insertOne(data);
@@ -31,7 +32,7 @@ exports.postSignUp = async (req, res) => {
     } catch (err) {
       return res
         .status(400)
-        .json(ResponseService.error(400, 'Username exist.', err));
+        .json(ResponseService.error(400, 'Username/Email exist.', err));
     }
   } catch (err) {
     return res
@@ -110,20 +111,34 @@ exports.postGoogleSignIn = async (req, res) => {
       .getDb()
       .db()
       .collection('users')
-      .findOne({ 'socials.googleId': response.sub });
+      .findOne({
+        $or: [{ 'socials.googleId': response.sub }, { email: response.email }],
+      });
 
     if (user) {
-      const payload = {
-        id: user.id,
-        username: user.username,
-      };
-      const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
-      return res.status(200).json(
-        ResponseService.response(200, 'Login Successfully.', {
-          accessToken,
-          user: payload,
-        })
-      );
+      if (user.socials && user.socials.googleId === response.sub) {
+        const payload = {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+        };
+        const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
+        return res.status(200).json(
+          ResponseService.response(200, 'Login Successfully.', {
+            accessToken,
+            user: payload,
+          })
+        );
+      }
+
+      return res
+        .status(400)
+        .json(
+          ResponseService.response(
+            400,
+            'There is an account with this email address, if you own the account, please login and then bind to this google account.'
+          )
+        );
     }
 
     const socialPending = await db.getDb().db().collection('socials').findOne({
@@ -140,14 +155,112 @@ exports.postGoogleSignIn = async (req, res) => {
     }
 
     const createAccountToken = uuidv4();
-    const data = await db.getDb().db().collection('socials').insertOne({
+    await db.getDb().db().collection('socials').insertOne({
+      createdAt: new Date(),
       provider: 'google',
       providerId: response.sub,
+      email: response.email,
       token: createAccountToken,
     });
     return res.status(203).json(
       ResponseService.response(203, 'Please update username.', {
-        token: data,
+        token: createAccountToken,
+      })
+    );
+  } catch (err) {
+    return res
+      .status(500)
+      .json(ResponseService.error(500, 'Internal Server Error', err));
+  }
+};
+
+exports.getValidField = async (req, res) => {
+  const { value, field } = req.query;
+  if (!value || !field) {
+    return res
+      .status(400)
+      .json(ResponseService.response(400, `field or value is missing.`));
+  }
+  const user = await db
+    .getDb()
+    .db()
+    .collection('users')
+    .findOne({ [field]: value });
+  if (!user) {
+    return res.status(200).json(
+      ResponseService.response(200, `${field} *${value}* is available.`, {
+        isFree: true,
+      })
+    );
+  }
+
+  return res.status(200).json(
+    ResponseService.response(200, `${field} *${value}* is not available.`, {
+      isFree: false,
+    })
+  );
+};
+
+exports.postFacebookSignin = async (req, res) => {
+  const { id, fbAccessToken } = req.body;
+  if (!fbAccessToken) {
+    return res
+      .status(404)
+      .json(
+        ResponseService.error(404, 'Cannot found the facebook access token.')
+      );
+  }
+  try {
+    const query = `https://graph.facebook.com/${id}?fields=birthday,email,picture&access_token=${fbAccessToken}`;
+    const response = await got(`${query}`).json();
+
+    const user = await db
+      .getDb()
+      .db()
+      .collection('users')
+      .findOne({
+        $or: [{ 'socials.facebookId': response.id }, { email: response.email }],
+      });
+
+    if (user) {
+      const payload = ResponseService.userPayload(
+        user.username,
+        user.displayName,
+        user.email
+      );
+      const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
+      return res.status(200).json(
+        ResponseService.response(200, 'Login Successfully.', {
+          accessToken,
+          user: payload,
+        })
+      );
+    }
+
+    const socialPending = await db.getDb().db().collection('socials').findOne({
+      provider: 'facebook',
+      providerId: response.sub,
+    });
+
+    if (socialPending) {
+      return res.status(203).json(
+        ResponseService.response(203, 'Please update username.', {
+          token: socialPending.token,
+        })
+      );
+    }
+
+    const createAccountToken = uuidv4();
+    await db.getDb().db().collection('socials').insertOne({
+      createdAt: new Date(),
+      provider: 'facebook',
+      providerId: response.id,
+      email: response.email,
+      token: createAccountToken,
+    });
+    return res.status(203).json(
+      ResponseService.response(203, 'Please update username.', {
+        token: createAccountToken,
       })
     );
   } catch (err) {
