@@ -32,6 +32,6 @@ exports.changePassword = async (req, res) => {
   });
 
   return res
-    .status(403)
-    .json(ResponseService.error(403, 'Non Authorization', null));
+    .status(200)
+    .json(ResponseService.response(200, 'Change password successfully', null));
 };

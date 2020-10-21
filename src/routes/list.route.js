@@ -1,5 +1,5 @@
-// const router = require('express').Router();
-// const passport = require('passport');
+const router = require('express').Router();
+const passport = require('passport');
 // const BoardController = require('../controllers/board.controller');
 
 // const authenticate = passport.authenticate('jwt', { session: false });
@@ -14,4 +14,4 @@
 
 // router.post('/:boardId/lists/', authenticate, BoardController.createList);
 
-// module.exports = router;
+module.exports = router;
