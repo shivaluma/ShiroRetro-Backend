@@ -11,6 +11,7 @@ const db = require('./config/db');
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   prettyPrint: { colorize: true },
+  disableAutoLogging: true,
 });
 const expressLogger = expressPino({ logger });
 const router = require('./routes');

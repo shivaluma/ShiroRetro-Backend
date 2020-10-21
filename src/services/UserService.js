@@ -9,9 +9,9 @@ module.exports = {
       throw new Error(err);
     }
   },
-  findOne: async (filter) => {
+  findOne: async (filter, projection) => {
     try {
-      const user = await getCollection('users').findOne(filter);
+      const user = await getCollection('users').findOne(filter, projection);
       return user;
     } catch (err) {
       throw new Error(err);

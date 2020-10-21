@@ -39,3 +39,20 @@ exports.deleteBoard = async (req, res) => {
       .json(ResponseService.error(400, 'Bad Request.', err));
   }
 };
+
+exports.putBoard = async (req, res) => {
+  const { user } = req;
+  const { id } = req.params;
+  const { name, description } = req.body;
+  try {
+    await BoardService.updateBoard(user._id, id, { name, description });
+
+    return res
+      .status(200)
+      .json(ResponseService.response(200, 'Update board successfully.'));
+  } catch (err) {
+    return res
+      .status(400)
+      .json(ResponseService.error(400, 'Bad Request.', err));
+  }
+};
