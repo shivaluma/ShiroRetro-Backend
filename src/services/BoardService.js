@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const shortid = require('shortid');
 const getCollection = require('../utils/getCollection');
 
 module.exports = {
@@ -19,6 +20,7 @@ module.exports = {
     const board = await getCollection('boards').insertOne({
       userId: uid,
       name,
+      shortId: shortid.generate(),
       description,
       createdAt: new Date(),
     });

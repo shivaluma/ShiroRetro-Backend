@@ -2,14 +2,22 @@ const { ObjectId } = require('mongodb');
 const getCollection = require('../utils/getCollection');
 
 module.exports = {
-  createCard: async (uid, name, description) => {
-    const board = await getCollection('cards').insertOne({
-      userId: uid,
+  createCard: async (idList, idBoard, name, desc, prevPos, uid) => {
+    const card = await getCollection('cards').insertOne({
+      idList,
       name,
-      description,
+      desc,
       createdAt: new Date(),
+      pos: prevPos + 65535,
+      userId: ObjectId(uid),
     });
-    return board.ops[0];
+    return card.ops[0];
+  },
+  findCard: async (idCard) => {
+    const card = await getCollection('cards').insertOne({
+      _id: ObjectId(idCard),
+    });
+    return card.ops[0];
   },
 
   removeCard: async (uid, id) => {
