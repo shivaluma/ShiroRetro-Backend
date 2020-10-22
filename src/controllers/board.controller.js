@@ -51,8 +51,22 @@ exports.putBoard = async (req, res) => {
       .status(200)
       .json(ResponseService.response(200, 'Update board successfully.'));
   } catch (err) {
+    req.log.error(err);
     return res
       .status(400)
-      .json(ResponseService.error(400, 'Bad Request.', err));
+      .json(ResponseService.error(400, 'Bad Request.', null));
+  }
+};
+
+exports.getBoards = async (req, res) => {
+  const { user } = req;
+  try {
+    const boards = await BoardService.getBoards(user._id);
+    req.log.error(boards);
+    return res.status(200).json(ResponseService.response(200, null, boards));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(ResponseService.error(500, 'Unexpected Error', err));
   }
 };
