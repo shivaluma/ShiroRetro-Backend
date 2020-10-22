@@ -23,14 +23,14 @@ module.exports = (passport) => {
           return done(
             null,
             false,
-            ResponseService.error(404, 'Invalid Token Provided')
+            ResponseService.error(400, 'Invalid Token Provided')
           );
         })
         .catch((err) =>
           done(
             null,
             false,
-            ResponseService.error(404, 'Internal Server Error', err)
+            ResponseService.error(500, 'Internal Server Error', err)
           )
         );
     })

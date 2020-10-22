@@ -4,10 +4,13 @@ const getCollection = require('../utils/getCollection');
 
 module.exports = {
   getBoards: async (uid) => {
-    const board = await getCollection('boards').find({
-      userId: ObjectId(uid),
-    });
-    return board;
+    const boards = await getCollection('boards')
+      .find({
+        userId: ObjectId(uid),
+      })
+      .toArray();
+
+    return boards;
   },
 
   getBoard: async (idBoard) => {
@@ -36,12 +39,15 @@ module.exports = {
 
   updateBoard: async (uid, bid, data) => {
     try {
-      const board = await getCollection('boards').findAndModify(
+      const board = await getCollection('boards').findOneAndUpdate(
         {
           _id: ObjectId(bid),
           userId: ObjectId(uid),
         },
-        data
+
+        {
+          $set: { name: data.name, description: data.description },
+        }
       );
       return board;
     } catch (err) {

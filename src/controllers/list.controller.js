@@ -32,3 +32,19 @@ exports.getList = async (req, res) => {
       .json(ResponseService.response(500, 'Unexpected error occurred', err));
   }
 };
+
+exports.getLists = async (req, res) => {
+  const { idBoard } = req.query;
+
+  try {
+    const lists = await ListService.getListByBoard(idBoard);
+
+    return res.status(200).json(ResponseService.response(200, null, lists));
+  } catch (err) {
+    return res
+      .status(404)
+      .json(
+        ResponseService.error(404, 'Cannot find lists of this idBoard', null)
+      );
+  }
+};
