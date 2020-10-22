@@ -36,6 +36,25 @@ exports.getCard = async (req, res) => {
   }
 };
 
-// exports.putCard = (req, res) => {};
+exports.putCard = async (req, res) => {
+  // const { user } = req;
+  const { idCard, name, description, lastPos, idList, idBoard } = req.body;
+  try {
+    const card = await CardService.updateCard(
+      idCard,
+      idList,
+      idBoard,
+      name,
+      description,
+      lastPos
+    );
 
-// exports.deleteCard = (req, res) => {};
+    return res
+      .status(201)
+      .json(ResponseService.response(201, 'Update card successful.', card));
+  } catch (err) {
+    return res
+      .status(400)
+      .json(ResponseService.error(400, 'Bad Request.', err));
+  }
+};

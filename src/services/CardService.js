@@ -3,11 +3,14 @@ const getCollection = require('../utils/getCollection');
 
 module.exports = {
   createCard: async (idList, idBoard, name, desc, prevPos, uid) => {
+    const newDate = new Date();
     const card = await getCollection('cards').insertOne({
       idList,
+      idBoard,
       name,
       desc,
-      createdAt: new Date(),
+      createdAt: newDate,
+      updatedAt: newDate,
       pos: prevPos + 65535,
       userId: ObjectId(uid),
     });
@@ -28,15 +31,18 @@ module.exports = {
   },
 
   updateCard: async (uid, bid, data) => {
+    const newDate = new Date();
     try {
-      const board = await getCollection('cards').findAndModify(
+      const card = await getCollection('cards').update(
         {
           _id: ObjectId(bid),
-          userId: ObjectId(uid),
         },
-        data
+        {
+          ...data,
+          updatedAt: newDate,
+        }
       );
-      return board;
+      return card;
     } catch (err) {
       throw new Error(err);
     }
