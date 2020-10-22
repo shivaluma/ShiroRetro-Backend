@@ -1,4 +1,5 @@
 const { ResponseService, BoardService } = require('../services');
+const ListService = require('../services/ListService');
 
 exports.postBoard = async (req, res) => {
   const { user } = req;
@@ -12,7 +13,10 @@ exports.postBoard = async (req, res) => {
 
   try {
     const board = await BoardService.createBoard(user._id, name, description);
-
+    const wentWellList = ListService.createList(board._id, 'Went well');
+    const toImProveList = ListService.createList(board._id, 'To Improve');
+    const actionItemList = ListService.createList(board._id, 'Action Item');
+    await Promise.allSettled([wentWellList, toImProveList, actionItemList]);
     return res
       .status(201)
       .json(ResponseService.response(201, 'Create board successfully.', board));

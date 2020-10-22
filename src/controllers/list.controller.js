@@ -13,7 +13,7 @@ exports.postList = async (req, res) => {
     const list = await ListService.createList(idBoard, name);
     return res
       .status(201)
-      .json(ResponseService.response(201, 'Create board successfully.', list));
+      .json(ResponseService.response(201, 'Create list successfully.', list));
   } catch (err) {
     return res
       .status(500)
