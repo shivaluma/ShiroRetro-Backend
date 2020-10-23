@@ -5,8 +5,8 @@ module.exports = {
   createCard: async (idList, idBoard, name, desc, prevPos, uid) => {
     const newDate = new Date();
     const card = await getCollection('cards').insertOne({
-      idList,
-      idBoard,
+      idList: ObjectId(idList),
+      idBoard: ObjectId(idBoard),
       name,
       desc,
       createdAt: newDate,

@@ -1,5 +1,6 @@
+const { nanoid } = require('nanoid');
+
 const { ObjectId } = require('mongodb');
-const shortid = require('shortid');
 const getCollection = require('../utils/getCollection');
 
 module.exports = {
@@ -14,16 +15,59 @@ module.exports = {
   },
 
   getBoard: async (idBoard) => {
-    const board = await getCollection('boards').findOne({
-      _id: ObjectId(idBoard),
-    });
+    const board = await getCollection('boards')
+      .aggregate([
+        { $match: { _id: ObjectId(idBoard) } },
+        {
+          $lookup: {
+            from: 'lists',
+            let: {
+              idBoard: '$_id',
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$idBoard', '$$idBoard'],
+                  },
+                },
+              },
+              {
+                $lookup: {
+                  from: 'cards',
+                  let: {
+                    idList: '$_id',
+                  },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $eq: ['$idList', '$$idList'],
+                        },
+                      },
+                    },
+                    {
+                      $sort: {
+                        pos: 1,
+                      },
+                    },
+                  ],
+                  as: 'cards',
+                },
+              },
+            ],
+            as: 'lists',
+          },
+        },
+      ])
+      .toArray();
     return board;
   },
   createBoard: async (uid, name, description) => {
     const board = await getCollection('boards').insertOne({
       userId: uid,
       name,
-      shortId: shortid.generate(),
+      shortId: nanoid(12),
       description,
       createdAt: new Date(),
     });

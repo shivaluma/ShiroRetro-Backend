@@ -5,6 +5,7 @@ const BoardController = require('../controllers/board.controller');
 const authenticate = passport.authenticate('jwt', { session: false });
 
 router.get('/', authenticate, BoardController.getBoards);
+router.get('/:idBoard', authenticate, BoardController.getBoard);
 router.post('/', authenticate, BoardController.postBoard);
 router.put('/:id', authenticate, BoardController.putBoard);
 router.delete('/:id', authenticate, BoardController.deleteBoard);

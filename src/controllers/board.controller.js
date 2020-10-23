@@ -74,3 +74,16 @@ exports.getBoards = async (req, res) => {
       .json(ResponseService.error(500, 'Unexpected Error', err));
   }
 };
+
+exports.getBoard = async (req, res) => {
+  const { idBoard } = req.params;
+
+  try {
+    const board = await BoardService.getBoard(idBoard);
+    return res.status(200).json(ResponseService.response(200, null, board));
+  } catch (err) {
+    return res
+      .status(500)
+      .json(ResponseService.error(500, 'Unexpected Error', err));
+  }
+};
