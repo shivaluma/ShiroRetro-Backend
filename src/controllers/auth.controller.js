@@ -12,6 +12,14 @@ exports.postSignUp = async (req, res) => {
       .json(ResponseService.error(400, 'Please provide all necessary data.'));
   }
 
+  if (password !== confirmPassword) {
+    return res.status(400).json(
+      ResponseService.error(400, 'Password and confirmPassword do not match.', {
+        fields: ['password', 'confirmPassword'],
+      })
+    );
+  }
+
   try {
     const hashedPassword = await argon2.hash(password);
 
@@ -25,7 +33,9 @@ exports.postSignUp = async (req, res) => {
     } catch (err) {
       return res
         .status(400)
-        .json(ResponseService.error(400, 'Email exist.', err));
+        .json(
+          ResponseService.error(400, 'Email exist.', { fields: ['email'] })
+        );
     }
   } catch (err) {
     return res
@@ -187,19 +197,19 @@ exports.postFacebookSignin = async (req, res) => {
       );
   }
   try {
-    const query = `https://graph.facebook.com/${id}?fields=birthday,email,picture&access_token=${fbAccessToken}`;
+    const query = `https://graph.facebook.com/${id}?fields=birthday,email,picture,name&access_token=${fbAccessToken}`;
     const response = await got(`${query}`).json();
-
+    console.log(response);
     const user = await UserService.findOne({
       $or: [{ 'socials.facebookId': response.id }, { email: response.email }],
     });
 
     if (user) {
-      const payload = ResponseService.userPayload(
-        user.email,
-        user.displayName,
-        user.email
-      );
+      const payload = {
+        id: user._id,
+        email: user.email,
+        displayName: user.displayName,
+      };
       const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
       return res.status(200).json(
         ResponseService.response(200, 'Login Successfully.', {
@@ -209,13 +219,15 @@ exports.postFacebookSignin = async (req, res) => {
       );
     }
 
-    const newUser = await UserService.createUser(
+    const newUserResponse = await UserService.createUser(
       response.email,
       'heheuguess',
       response.name,
       null,
       response.id
     );
+
+    const newUser = newUserResponse.ops[0];
 
     const payload = {
       id: newUser._id,

@@ -79,6 +79,10 @@ module.exports = {
       userId: ObjectId(uid),
       _id: ObjectId(id),
     });
+
+    await getCollection('lists').deleteMany({
+      idBoard: ObjectId(id),
+    });
   },
 
   updateBoard: async (uid, bid, data) => {

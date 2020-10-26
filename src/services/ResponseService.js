@@ -19,9 +19,8 @@ module.exports = class ResponseService {
 
   static userPayload(username, displayName, email) {
     return {
-      username,
-      displayName,
       email,
+      displayName,
     };
   }
 };
