@@ -2,13 +2,11 @@ require('dotenv').config();
 const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 const got = require('got');
-const { v4: uuidv4 } = require('uuid');
 const { ResponseService, UserService } = require('../services');
-const getCollection = require('../utils/getCollection');
 
 exports.postSignUp = async (req, res) => {
-  const { username, password, confirmPassword, email } = req.body;
-  if (!username || !password || !email || !confirmPassword) {
+  const { email, password, confirmPassword } = req.body;
+  if (!email || !password || !confirmPassword) {
     return res
       .status(400)
       .json(ResponseService.error(400, 'Please provide all necessary data.'));
@@ -16,14 +14,9 @@ exports.postSignUp = async (req, res) => {
 
   try {
     const hashedPassword = await argon2.hash(password);
-    const data = {
-      username,
-      password: hashedPassword,
-      displayName: username,
-      email,
-    };
+
     try {
-      await UserService.createUser(data);
+      await UserService.createUser(email, hashedPassword, email);
       return res
         .status(201)
         .json(
@@ -32,7 +25,7 @@ exports.postSignUp = async (req, res) => {
     } catch (err) {
       return res
         .status(400)
-        .json(ResponseService.error(400, 'Username/Email exist.', err));
+        .json(ResponseService.error(400, 'Email exist.', err));
     }
   } catch (err) {
     return res
@@ -42,15 +35,15 @@ exports.postSignUp = async (req, res) => {
 };
 
 exports.postSignIn = async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
+  const { email, password } = req.body;
+  if (!email || !password) {
     return res
       .status(400)
-      .json(ResponseService.error(400, 'No username/password was provided.'));
+      .json(ResponseService.error(400, 'No email/password was provided.'));
   }
 
   try {
-    const user = await UserService.findOne({ username });
+    const user = await UserService.findOne({ email });
     req.log.info(user);
     if (!user)
       return res
@@ -58,7 +51,7 @@ exports.postSignIn = async (req, res) => {
         .json(
           ResponseService.error(
             404,
-            'Cannot find account with this username.',
+            'Cannot find account with this email.',
             null
           )
         );
@@ -68,12 +61,12 @@ exports.postSignIn = async (req, res) => {
     if (!isSamePassword) {
       return res
         .status(400)
-        .json(ResponseService.error(400, 'Wrong username or password.', null));
+        .json(ResponseService.error(400, 'Wrong email or password.', null));
     }
 
     const payload = {
       id: user._id,
-      username: user.username,
+      email: user.email,
       displayName: user.displayName,
     };
     const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
@@ -104,14 +97,14 @@ exports.postGoogleSignIn = async (req, res) => {
     const response = await got(`${query}`).json();
 
     const user = await UserService.findOne({
-      $or: [{ 'socials.googleId': response.sub }, { email: response.email }],
+      $or: [{ idGoogle: response.sub }, { email: response.email }],
     });
 
     if (user) {
-      if (user.socials && user.socials.googleId === response.sub) {
+      if (user.idGoogle === response.sub) {
         const payload = {
           id: user._id,
-          username: user.username,
+          email: user.email,
           displayName: user.displayName,
         };
         const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
@@ -133,32 +126,27 @@ exports.postGoogleSignIn = async (req, res) => {
         );
     }
 
-    const socialPending = await getCollection('socials').findOne({
-      provider: 'google',
-      providerId: response.sub,
-    });
+    const newUser = await UserService.createUser(
+      response.email,
+      'heheuguess',
+      response.name,
+      response.sub
+    );
 
-    if (socialPending) {
-      return res.status(203).json(
-        ResponseService.response(203, 'Please update username.', {
-          token: socialPending.token,
-        })
-      );
-    }
-
-    const createAccountToken = uuidv4();
-    await getCollection('socials').insertOne({
-      createdAt: new Date(),
-      provider: 'google',
-      providerId: response.sub,
-      email: response.email,
-      token: createAccountToken,
-    });
-    return res.status(203).json(
-      ResponseService.response(203, 'Please update username.', {
-        token: createAccountToken,
+    const payload = {
+      id: newUser._id,
+      email: newUser.email,
+      displayName: newUser.displayName,
+    };
+    const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
+    return res.status(200).json(
+      ResponseService.response(200, 'Login Successfully.', {
+        accessToken,
+        user: payload,
       })
     );
+
+    // create account
   } catch (err) {
     return res
       .status(500)
@@ -208,7 +196,7 @@ exports.postFacebookSignin = async (req, res) => {
 
     if (user) {
       const payload = ResponseService.userPayload(
-        user.username,
+        user.email,
         user.displayName,
         user.email
       );
@@ -221,30 +209,24 @@ exports.postFacebookSignin = async (req, res) => {
       );
     }
 
-    const socialPending = await getCollection('socials').findOne({
-      provider: 'facebook',
-      providerId: response.sub,
-    });
+    const newUser = await UserService.createUser(
+      response.email,
+      'heheuguess',
+      response.name,
+      null,
+      response.id
+    );
 
-    if (socialPending) {
-      return res.status(203).json(
-        ResponseService.response(203, 'Please update username.', {
-          token: socialPending.token,
-        })
-      );
-    }
-
-    const createAccountToken = uuidv4();
-    await getCollection('socials').insertOne({
-      createdAt: new Date(),
-      provider: 'facebook',
-      providerId: response.id,
-      email: response.email,
-      token: createAccountToken,
-    });
-    return res.status(203).json(
-      ResponseService.response(203, 'Please update username.', {
-        token: createAccountToken,
+    const payload = {
+      id: newUser._id,
+      email: newUser.email,
+      displayName: newUser.displayName,
+    };
+    const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
+    return res.status(200).json(
+      ResponseService.response(200, 'Login Successfully.', {
+        accessToken,
+        user: payload,
       })
     );
   } catch (err) {

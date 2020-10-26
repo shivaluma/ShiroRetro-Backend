@@ -1,9 +1,15 @@
 const getCollection = require('../utils/getCollection');
 
 module.exports = {
-  createUser: async (data) => {
+  createUser: async (email, password, displayName, idGoogle, idFacebook) => {
     try {
-      const user = await getCollection('users').insertOne(data);
+      const user = await getCollection('users').insertOne({
+        email,
+        password,
+        displayName,
+        idGoogle,
+        idFacebook,
+      });
       return user;
     } catch (err) {
       throw new Error(err);

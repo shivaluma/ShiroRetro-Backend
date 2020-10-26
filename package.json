@@ -5,8 +5,8 @@
   "author": "shivaluma <shivaluma@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js",
     "lint": "eslint --fix .",
     "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc"
   },
