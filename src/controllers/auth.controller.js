@@ -103,7 +103,7 @@ exports.postGoogleSignIn = async (req, res) => {
       );
   }
   try {
-    const query = `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${ggAccessToken}`;
+    const query = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${ggAccessToken}`;
     const response = await got(`${query}`).json();
 
     const user = await UserService.findOne({
@@ -129,7 +129,7 @@ exports.postGoogleSignIn = async (req, res) => {
       return res
         .status(400)
         .json(
-          ResponseService.response(
+          ResponseService.error(
             400,
             'There is an account with this email address, if you own the account, please login and then bind to this google account.'
           )
