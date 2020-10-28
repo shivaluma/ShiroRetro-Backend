@@ -136,18 +136,21 @@ exports.postGoogleSignIn = async (req, res) => {
         );
     }
 
-    const newUser = await UserService.createUser(
+    const newUserResponse = await UserService.createUser(
       response.email,
       'heheuguess',
       response.name,
       response.sub
     );
 
+    const newUser = newUserResponse.ops[0];
+
     const payload = {
       id: newUser._id,
       email: newUser.email,
       displayName: newUser.displayName,
     };
+
     const accessToken = jwt.sign(payload, process.env.SECRET_KEY);
     return res.status(200).json(
       ResponseService.response(200, 'Login Successfully.', {
