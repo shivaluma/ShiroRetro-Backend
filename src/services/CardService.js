@@ -30,20 +30,27 @@ module.exports = {
     });
   },
 
-  updateCard: async (uid, bid, data) => {
+  updateCard: async ({ _id, idList, idBoard, ...rest }) => {
     const newDate = new Date();
     try {
-      const card = await getCollection('cards').update(
+      const card = await getCollection('cards').findOneAndReplace(
         {
-          _id: ObjectId(bid),
+          _id: ObjectId(_id),
         },
         {
-          ...data,
+          idList: ObjectId(idList),
+          idBoard: ObjectId(idBoard),
+          ...rest,
           updatedAt: newDate,
+        },
+        {
+          returnOriginal: false,
+          returnNewDocument: true,
         }
       );
       return card;
     } catch (err) {
+      console.log(err);
       throw new Error(err);
     }
   },
