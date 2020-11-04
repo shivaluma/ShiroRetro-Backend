@@ -48,7 +48,7 @@ module.exports = {
                     },
                     {
                       $sort: {
-                        pos: 1,
+                        pos: -1,
                       },
                     },
                   ],
