@@ -21,6 +21,7 @@ exports.postBoard = async (req, res) => {
       .status(201)
       .json(ResponseService.response(201, 'Create board successfully.', board));
   } catch (err) {
+    console.log(err);
     return res
       .status(500)
       .json(ResponseService.error(500, 'Some unexpected error occurred.', err));
@@ -49,11 +50,14 @@ exports.putBoard = async (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
   try {
-    await BoardService.updateBoard(user._id, id, { name, description });
+    const board = await BoardService.updateBoard(user._id, id, {
+      name,
+      description,
+    });
 
     return res
       .status(200)
-      .json(ResponseService.response(200, 'Update board successfully.'));
+      .json(ResponseService.response(200, 'Update board successfully.', board));
   } catch (err) {
     req.log.error(err);
     return res

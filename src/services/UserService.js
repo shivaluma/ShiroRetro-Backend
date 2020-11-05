@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const getCollection = require('../utils/getCollection');
 
 module.exports = {
@@ -24,12 +25,17 @@ module.exports = {
     }
   },
 
-  updateField: async (filter, update) => {
-    try {
-      const user = await getCollection('users').findAndModify(filter, update);
-      return user;
-    } catch (err) {
-      throw new Error(err);
-    }
+  updateField: async (id, update) => {
+    const user = await getCollection('users').findOneAndUpdate(
+      { _id: ObjectId(id) },
+      { $set: { displayName: update.displayName } },
+      {
+        returnNewDocument: true,
+        returnOriginal: false,
+        projection: { password: 0 },
+      }
+    );
+
+    return user.value;
   },
 };

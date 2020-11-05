@@ -92,7 +92,6 @@ module.exports = {
           _id: ObjectId(bid),
           userId: ObjectId(uid),
         },
-
         {
           $set: { name: data.name, description: data.description },
         }

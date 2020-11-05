@@ -35,3 +35,19 @@ exports.changePassword = async (req, res) => {
     .status(200)
     .json(ResponseService.response(200, 'Change password successfully', null));
 };
+
+exports.putUpdateProfile = async (req, res) => {
+  const { _id } = req.user;
+  const update = req.body;
+  try {
+    const result = await UserService.updateField(_id, update);
+    return res
+      .status(200)
+      .json(ResponseService.response(200, 'Update profile success', result));
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(500)
+      .json(ResponseService.error(500, 'Update profile success', err));
+  }
+};
