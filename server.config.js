@@ -9,8 +9,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: '5000',
-        MONGODB_URL:
-          'mongodb://shivaluma:nguhamay@35.201.203.222:27017/sprint_restrospective',
+        MONGODB_URL: 'mongodb://127.0.0.1:27017/sprint_restrospective',
         SECRET_KEY: 'notsecret',
       },
     },
